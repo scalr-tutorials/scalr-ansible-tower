@@ -45,7 +45,7 @@ def get_servers(client, envId):
         for farmRoleId, farmRole in farmRoles.iteritems():
             if farmRole['farm']['id'] != farmId:
                 continue
-            farmRoleGroupId = str(farmId) + '-' + farmRole['alias']
+            farmRoleGroupId = str(farmRoleId) + '-' + farmRole['alias']
             result[farm['name']]['children'].append(farmRoleGroupId)
             result[farmRoleGroupId] = {'hosts': [], 'vars': {
                                         'id': farmRoleId,
