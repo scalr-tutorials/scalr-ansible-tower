@@ -64,24 +64,19 @@ def get_servers(client, envId):
 
 
 
-def main(credentials_file):
-    # Setup credentials
-    with open(credentials_file) as f:
-        creds = json.load(f)
-        api_url, api_key_id, api_key_secret, env_id, basic_auth_username, basic_auth_password = \
-                [creds.get(k, "") for k in ["api_url", "api_key_id", "api_key_secret", "env_id", "basic_auth_username", "basic_auth_password"]]
-
+def main(api_url, api_key_id, api_key_secret, env_id):
     client = ScalrApiClient(api_url.rstrip("/"), api_key_id, api_key_secret)
-    client.session.auth = requests.auth.HTTPBasicAuth(basic_auth_username, basic_auth_password)
-
     get_servers(client, env_id)
 
 
 if __name__ == "__main__":
     import argparse
     parser = argparse.ArgumentParser()
-    parser.add_argument("credentials", help="Path to credentials file")
+    parser.add_argument("api_url", help="URL of Scalr. For instance: https://my.scalr.com")
+    parser.add_argument("key_id", help="Your Scalr API Key ID")
+    parser.add_argument("key_secret", help="Your Scalr API Key Secret")
+    parser.add_argument("env_id", help="The ID of the environment to use")
 
     ns = parser.parse_args()
 
-    main(ns.credentials)
+    main(ns.api_url, ns.key_id, ns.key_secret, ns.env_id)
