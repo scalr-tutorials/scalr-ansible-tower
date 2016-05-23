@@ -55,6 +55,9 @@ def get_servers(client, envId):
             for server in servers:
                 if server['farmRole']['id'] != farmRoleId:
                     continue
+                if len(server['publicIp']) == 0:
+                    # Server has no public IP
+                    continue
                 result[farmRoleGroupId]['hosts'].append(server['publicIp'][0])
                 result['_meta']['hostvars'][server['publicIp'][0]] = {'hostname': server['hostname']}
     print json.dumps(result, indent=2)
