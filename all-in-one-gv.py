@@ -18,6 +18,9 @@ import urllib
 import urlparse
 from collections import Mapping, Iterable
 
+# Set to True to fetch Global Variables for each server.
+# This has a non-negligible performance impact on large inventories
+FETCH_GV = True
 
 class ScalrApiClient(object):
     def __init__(self, api_url, key_id, key_secret):
@@ -124,10 +127,11 @@ def get_env_servers(client, envId):
     servers = client.list(servers_path)
 
     global_variables = {}
-    for server in servers:
-        sId = server['id']
-        GV_path = '/api/v1beta0/user/{envId}/servers/{serverId}/global-variables/'.format(envId=envId, serverId=sId)
-        global_variables[sId] = client.list(GV_path)
+    if FETCH_GV:
+        for server in servers:
+            sId = server['id']
+            GV_path = '/api/v1beta0/user/{envId}/servers/{serverId}/global-variables/'.format(envId=envId, serverId=sId)
+            global_variables[sId] = client.list(GV_path)
 
     farmIds = []
     farmRoleIds = []
@@ -166,7 +170,7 @@ def get_env_servers(client, envId):
             result[farm['name']]['children'].append(farmRoleGroupId)
             result[farmRoleGroupId] = {'hosts': [], 'vars': {
                                         'id': farmRoleId,
-                                        'platform': farmRole['platform'],
+                                        'platform': farmRole['cloudPlatform'],
                                         'roleId': farmRole['role']['id']
                                       }}
             for server in servers:
@@ -185,9 +189,10 @@ def get_env_servers(client, envId):
                     'SCALR_LAUNCHED': server['launched'],
                     'SCALR_LAUNCH_REASON': server['launchReason']
                 }
-                for gv in global_variables[server['id']]:
-                    if not gv['name'].startswith('SCALR_') and 'computedValue' in gv:
-                        result['_meta']['hostvars'][server['publicIp'][0]][gv['name']] = gv['computedValue']
+                if FETCH_GV:
+                    for gv in global_variables[server['id']]:
+                        if not gv['name'].startswith('SCALR_') and 'computedValue' in gv:
+                            result['_meta']['hostvars'][server['publicIp'][0]][gv['name']] = gv['computedValue']
     print json.dumps(result, indent=2)
 
 def get_farm_servers(client, envId, farmId):
@@ -195,10 +200,11 @@ def get_farm_servers(client, envId, farmId):
     servers = client.list(servers_path)
 
     global_variables = {}
-    for server in servers:
-        sId = server['id']
-        GV_path = '/api/v1beta0/user/{envId}/servers/{serverId}/global-variables/'.format(envId=envId, serverId=sId)
-        global_variables[sId] = client.list(GV_path)
+    if FETCH_GV:
+        for server in servers:
+            sId = server['id']
+            GV_path = '/api/v1beta0/user/{envId}/servers/{serverId}/global-variables/'.format(envId=envId, serverId=sId)
+            global_variables[sId] = client.list(GV_path)
 
     farmRoleIds = []
     for s in servers:
@@ -222,7 +228,7 @@ def get_farm_servers(client, envId, farmId):
         farmRoleGroupId = 'farm-role-' + str(farmRoleId) + '-' + farmRole['alias']
         result[farmRoleGroupId] = {'hosts': [], 'vars': {
                                     'id': farmRoleId,
-                                    'platform': farmRole['platform'],
+                                    'platform': farmRole['cloudPlatform'],
                                     'roleId': farmRole['role']['id']
                                   }}
         for server in servers:
@@ -241,9 +247,10 @@ def get_farm_servers(client, envId, farmId):
                 'SCALR_LAUNCHED': server['launched'],
                 'SCALR_LAUNCH_REASON': server['launchReason']
             }
-            for gv in global_variables[server['id']]:
-                if not gv['name'].startswith('SCALR_') and 'computedValue' in gv:
-                    result['_meta']['hostvars'][server['publicIp'][0]][gv['name']] = gv['computedValue']
+            if FETCH_GV:
+                for gv in global_variables[server['id']]:
+                    if not gv['name'].startswith('SCALR_') and 'computedValue' in gv:
+                        result['_meta']['hostvars'][server['publicIp'][0]][gv['name']] = gv['computedValue']
     print json.dumps(result, indent=2)
 
 def get_acct_servers(client):
@@ -259,10 +266,11 @@ def get_acct_servers(client):
         servers = client.list(servers_path)
 
         global_variables = {}
-        for server in servers:
-            sId = server['id']
-            GV_path = '/api/v1beta0/user/{envId}/servers/{serverId}/global-variables/'.format(envId=envId, serverId=sId)
-            global_variables[sId] = client.list(GV_path)
+        if FETCH_GV:
+            for server in servers:
+                sId = server['id']
+                GV_path = '/api/v1beta0/user/{envId}/servers/{serverId}/global-variables/'.format(envId=envId, serverId=sId)
+                global_variables[sId] = client.list(GV_path)
 
         farms_path = '/api/v1beta0/user/{envId}/farms/'.format(envId=envId)
         farms = client.list(farms_path)
@@ -295,7 +303,7 @@ def get_acct_servers(client):
                 farmRole = farmRoles[serverFarmRole]
                 farmGroup['children'][serverFarmRole] = {'hosts': [], 'vars': {
                                                         'id': serverFarmRole,
-                                                        'platform': farmRole['platform'],
+                                                        'platform': farmRole['cloudPlatform'],
                                                         'roleId': farmRole['role']['id']
                                                       }}
             farmRoleGroup = farmGroup['children'][serverFarmRole]
@@ -309,9 +317,10 @@ def get_acct_servers(client):
                 'SCALR_LAUNCHED': s['launched'],
                 'SCALR_LAUNCH_REASON': s['launchReason']
             }
-            for gv in global_variables[s['id']]:
-                if not gv['name'].startswith('SCALR_') and 'computedValue' in gv:
-                    result['_meta']['hostvars'][s['publicIp'][0]][gv['name']] = gv['computedValue']
+            if FETCH_GV:
+                for gv in global_variables[s['id']]:
+                    if not gv['name'].startswith('SCALR_') and 'computedValue' in gv:
+                        result['_meta']['hostvars'][s['publicIp'][0]][gv['name']] = gv['computedValue']
 
         # Unpacking, 1: farm roles
         for farmId, farmGroup in envGroups.items():
