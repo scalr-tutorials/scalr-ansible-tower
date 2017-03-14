@@ -5,6 +5,7 @@ import base64
 import datetime
 import hashlib
 import hmac
+import itertools
 import json
 import logging
 import os
@@ -25,6 +26,11 @@ FETCH_GV = False
 # The IP registered in Ansible, you can set this to 'privateIp' if Ansible
 # can access all your servers by their private IP.
 IP_VARIABLE = 'publicIp'
+
+# Allowed server status. A list of allowed status, [''] for any status
+# A server needs an IP to be registered in Ansible, so suspended servers will
+# generally not show up in the inventory even if you add 'suspended' in there
+SERVER_STATUS = ['running', 'pending_terminate']
 
 
 class ScalrApiClient(object):
@@ -128,8 +134,14 @@ class ScalrApiSession(requests.Session):
         return res
 
 def get_env_servers(client, envId):
-    servers_path = '/api/v1beta0/user/{envId}/servers/?status=running'.format(envId=envId)
-    servers = client.list(servers_path)
+    if '' in SERVER_STATUS:
+        servers_path = '/api/v1beta0/user/{envId}/servers/'.format(envId=envId)
+        servers = client.list(servers_path)
+    else:
+        servers = list(itertools.chain.from_iterable([
+            client.list('/api/v1beta0/user/{envId}/servers/?status={s}'.format(envId=envId, s=s))
+            for s in SERVER_STATUS
+        ]))
 
     global_variables = {}
     if FETCH_GV:
@@ -201,8 +213,14 @@ def get_env_servers(client, envId):
     print json.dumps(result, indent=2)
 
 def get_farm_servers(client, envId, farmId):
-    servers_path = '/api/v1beta0/user/{envId}/farms/{farmId}/servers/?status=running'.format(envId=envId, farmId=farmId)
-    servers = client.list(servers_path)
+    if '' in SERVER_STATUS:
+        servers_path = '/api/v1beta0/user/{envId}/farms/{farmId}/servers/'.format(envId=envId, farmId=farmId)
+        servers = client.list(servers_path)
+    else:
+        servers = list(itertools.chain.from_iterable([
+            client.list('/api/v1beta0/user/{envId}/farms/{farmId}/servers/?status={s}'.format(envId=envId, farmId=farmId, s=s))
+            for s in SERVER_STATUS
+        ]))
 
     global_variables = {}
     if FETCH_GV:
@@ -267,8 +285,14 @@ def get_acct_servers(client):
     for e in envs:
         envId = e['id']
 
-        servers_path = '/api/v1beta0/user/{envId}/servers/?status=running'.format(envId=envId)
-        servers = client.list(servers_path)
+        if '' in SERVER_STATUS:
+            servers_path = '/api/v1beta0/user/{envId}/servers/'.format(envId=envId)
+            servers = client.list(servers_path)
+        else:
+            servers = list(itertools.chain.from_iterable([
+                client.list('/api/v1beta0/user/{envId}/servers/?status={s}'.format(envId=envId, s=s))
+                for s in SERVER_STATUS
+            ]))
 
         global_variables = {}
         if FETCH_GV:
