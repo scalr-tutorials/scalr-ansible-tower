@@ -22,6 +22,11 @@ from collections import Mapping, Iterable
 # This has a non-negligible performance impact on large inventories
 FETCH_GV = False
 
+# The IP registered in Ansible, you can set this to 'privateIp' if Ansible
+# can access all your servers by their private IP.
+IP_VARIABLE = 'publicIp'
+
+
 class ScalrApiClient(object):
     def __init__(self, api_url, key_id, key_secret):
         self.api_url = api_url
@@ -176,11 +181,11 @@ def get_env_servers(client, envId):
             for server in servers:
                 if server['farmRole']['id'] != farmRoleId:
                     continue
-                if len(server['publicIp']) == 0:
+                if len(server[IP_VARIABLE]) == 0:
                     # Server has no public IP
                     continue
-                result[farmRoleGroupId]['hosts'].append(server['publicIp'][0])
-                result['_meta']['hostvars'][server['publicIp'][0]] = {
+                result[farmRoleGroupId]['hosts'].append(server[IP_VARIABLE][0])
+                result['_meta']['hostvars'][server[IP_VARIABLE][0]] = {
                     'SCALR_HOSTNAME': server['hostname'],
                     'SCALR_ID': server['id'],
                     'SCALR_INDEX': server['index'],
@@ -192,7 +197,7 @@ def get_env_servers(client, envId):
                 if FETCH_GV:
                     for gv in global_variables[server['id']]:
                         if not gv['name'].startswith('SCALR_') and 'computedValue' in gv:
-                            result['_meta']['hostvars'][server['publicIp'][0]][gv['name']] = gv['computedValue']
+                            result['_meta']['hostvars'][server[IP_VARIABLE][0]][gv['name']] = gv['computedValue']
     print json.dumps(result, indent=2)
 
 def get_farm_servers(client, envId, farmId):
@@ -234,11 +239,11 @@ def get_farm_servers(client, envId, farmId):
         for server in servers:
             if server['farmRole']['id'] != farmRoleId:
                 continue
-            if len(server['publicIp']) == 0:
+            if len(server[IP_VARIABLE]) == 0:
                 # Server has no public IP
                 continue
-            result[farmRoleGroupId]['hosts'].append(server['publicIp'][0])
-            result['_meta']['hostvars'][server['publicIp'][0]] = {
+            result[farmRoleGroupId]['hosts'].append(server[IP_VARIABLE][0])
+            result['_meta']['hostvars'][server[IP_VARIABLE][0]] = {
                 'SCALR_HOSTNAME': server['hostname'],
                 'SCALR_ID': server['id'],
                 'SCALR_INDEX': server['index'],
@@ -250,7 +255,7 @@ def get_farm_servers(client, envId, farmId):
             if FETCH_GV:
                 for gv in global_variables[server['id']]:
                     if not gv['name'].startswith('SCALR_') and 'computedValue' in gv:
-                        result['_meta']['hostvars'][server['publicIp'][0]][gv['name']] = gv['computedValue']
+                        result['_meta']['hostvars'][server[IP_VARIABLE][0]][gv['name']] = gv['computedValue']
     print json.dumps(result, indent=2)
 
 def get_acct_servers(client):
@@ -285,8 +290,8 @@ def get_acct_servers(client):
 
         envGroups = {}
         for s in servers:
-            if len(s['publicIp']) == 0:
-                # Can't handle a server without public IP if we have no guarantee Ansible can reach it on the private IP
+            if len(s[IP_VARIABLE]) == 0:
+                # Can't find an IP
                 continue
             serverFarm = s['farm']['id']
             serverFarmRole = s['farmRole']['id']
@@ -307,8 +312,8 @@ def get_acct_servers(client):
                                                         'roleId': farmRole['role']['id']
                                                       }}
             farmRoleGroup = farmGroup['children'][serverFarmRole]
-            farmRoleGroup['hosts'].append(s['publicIp'][0])
-            result['_meta']['hostvars'][s['publicIp'][0]] = {
+            farmRoleGroup['hosts'].append(s[IP_VARIABLE][0])
+            result['_meta']['hostvars'][s[IP_VARIABLE][0]] = {
                 'SCALR_HOSTNAME': s['hostname'],
                 'SCALR_ID': s['id'],
                 'SCALR_INDEX': s['index'],
@@ -320,7 +325,7 @@ def get_acct_servers(client):
             if FETCH_GV:
                 for gv in global_variables[s['id']]:
                     if not gv['name'].startswith('SCALR_') and 'computedValue' in gv:
-                        result['_meta']['hostvars'][s['publicIp'][0]][gv['name']] = gv['computedValue']
+                        result['_meta']['hostvars'][s[IP_VARIABLE][0]][gv['name']] = gv['computedValue']
 
         # Unpacking, 1: farm roles
         for farmId, farmGroup in envGroups.items():
