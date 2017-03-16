@@ -133,6 +133,25 @@ class ScalrApiSession(requests.Session):
         self.client.logger.debug("Received response: %s", res.text)
         return res
 
+def base_variables(server):
+    return {
+        'SCALR_HOSTNAME': server['hostname'],
+        'SCALR_ID': server['id'],
+        'SCALR_INDEX': server['index'],
+        'SCALR_PUBLIC_IP': server['publicIp'],
+        'SCALR_PRIVATE_IP': server['privateIp'],
+        'SCALR_LAUNCHED': server['launched'],
+        'SCALR_LAUNCH_REASON': server['launchReason'],
+        'SCALR_CLOUD_LOCATION': server['cloudLocation'],
+        'SCALR_CLOUD_PLATFORM': server['cloudPlatform'],
+        'SCALR_CLOUD_SERVER_ID': server['cloudServerId'],
+        'SCALR_INSTANCE_TYPE': server['type'],
+        'SCALR_STATUS': server['status'],
+        'SCALR_AGENT_VERSION': server['scalrAgent']['version'],
+        'SCALR_AGENT_INITIALISATION_STATUS': server['scalrAgent']['initializationStatus']['status'],
+        'SCALR_AGENT_REACHABILITY_STATUS': server['scalrAgent']['reachabilityStatus']['status'],
+    }
+
 def get_env_servers(client, envId):
     if '' in SERVER_STATUS:
         servers_path = '/api/v1beta0/user/{envId}/servers/'.format(envId=envId)
@@ -197,15 +216,7 @@ def get_env_servers(client, envId):
                     # Server has no public IP
                     continue
                 result[farmRoleGroupId]['hosts'].append(server[IP_VARIABLE][0])
-                result['_meta']['hostvars'][server[IP_VARIABLE][0]] = {
-                    'SCALR_HOSTNAME': server['hostname'],
-                    'SCALR_ID': server['id'],
-                    'SCALR_INDEX': server['index'],
-                    'SCALR_PUBLIC_IP': server['publicIp'],
-                    'SCALR_PRIVATE_IP': server['privateIp'],
-                    'SCALR_LAUNCHED': server['launched'],
-                    'SCALR_LAUNCH_REASON': server['launchReason']
-                }
+                result['_meta']['hostvars'][server[IP_VARIABLE][0]] = base_variables(server)
                 if FETCH_GV:
                     for gv in global_variables[server['id']]:
                         if not gv['name'].startswith('SCALR_') and 'computedValue' in gv:
@@ -261,15 +272,7 @@ def get_farm_servers(client, envId, farmId):
                 # Server has no public IP
                 continue
             result[farmRoleGroupId]['hosts'].append(server[IP_VARIABLE][0])
-            result['_meta']['hostvars'][server[IP_VARIABLE][0]] = {
-                'SCALR_HOSTNAME': server['hostname'],
-                'SCALR_ID': server['id'],
-                'SCALR_INDEX': server['index'],
-                'SCALR_PUBLIC_IP': server['publicIp'],
-                'SCALR_PRIVATE_IP': server['privateIp'],
-                'SCALR_LAUNCHED': server['launched'],
-                'SCALR_LAUNCH_REASON': server['launchReason']
-            }
+            result['_meta']['hostvars'][server[IP_VARIABLE][0]] = base_variables(server)
             if FETCH_GV:
                 for gv in global_variables[server['id']]:
                     if not gv['name'].startswith('SCALR_') and 'computedValue' in gv:
@@ -337,15 +340,7 @@ def get_acct_servers(client):
                                                       }}
             farmRoleGroup = farmGroup['children'][serverFarmRole]
             farmRoleGroup['hosts'].append(s[IP_VARIABLE][0])
-            result['_meta']['hostvars'][s[IP_VARIABLE][0]] = {
-                'SCALR_HOSTNAME': s['hostname'],
-                'SCALR_ID': s['id'],
-                'SCALR_INDEX': s['index'],
-                'SCALR_PUBLIC_IP': s['publicIp'],
-                'SCALR_PRIVATE_IP': s['privateIp'],
-                'SCALR_LAUNCHED': s['launched'],
-                'SCALR_LAUNCH_REASON': s['launchReason']
-            }
+            result['_meta']['hostvars'][s[IP_VARIABLE][0]] = base_variables(s)
             if FETCH_GV:
                 for gv in global_variables[s['id']]:
                     if not gv['name'].startswith('SCALR_') and 'computedValue' in gv:
