@@ -22,4 +22,13 @@ $headers = @{
     "Accept"="*/*"
 }
 
-Invoke-WebRequest -Uri $env:ANSIBLE_CALLBACK_URL -Method POST -Body $data -UseBasicParsing -Headers $headers
+try {
+    Invoke-WebRequest -Uri $env:ANSIBLE_CALLBACK_URL -Method POST -Body $data -Headers $headers
+} catch {
+    $err=$_.Exception
+    echo "Error:" $err.Status $err.Message
+    echo $err.Response
+    $r = New-Object System.IO.StreamReader($err.Response.GetResponseStream())
+    echo $r.ReadToEnd()
+}
+
