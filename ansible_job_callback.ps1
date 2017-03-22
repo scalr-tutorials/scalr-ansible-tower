@@ -23,7 +23,7 @@ $headers = @{
 }
 
 try {
-    Invoke-WebRequest -Uri $env:ANSIBLE_CALLBACK_URL -Method POST -Body $data -Headers $headers
+    Invoke-WebRequest -Uri $env:ANSIBLE_CALLBACK_URL -Method POST -Body $data -Headers $headers -UseBasicParsing
 } catch {
     $err=$_.Exception
     echo "Error:" $err.Status $err.Message
