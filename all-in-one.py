@@ -145,7 +145,7 @@ def base_variables(server):
         'SCALR_CLOUD_LOCATION': server['cloudLocation'],
         'SCALR_CLOUD_PLATFORM': server['cloudPlatform'],
         'SCALR_CLOUD_SERVER_ID': server['cloudServerId'],
-        'SCALR_INSTANCE_TYPE': server['type'],
+        'SCALR_INSTANCE_TYPE': server['instanceType']['id'],
         'SCALR_STATUS': server['status'],
         'SCALR_AGENT_VERSION': server['scalrAgent']['version'],
         'SCALR_AGENT_INITIALISATION_STATUS': server['scalrAgent']['initializationStatus']['status'],
